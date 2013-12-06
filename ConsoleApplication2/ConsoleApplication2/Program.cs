@@ -76,7 +76,7 @@ namespace ConsoleApplication2
             return dlugosc_trasy;
         }
 
-        static void optymalizacja(int[] trasa, int[,] macierz)
+        static int optymalizacja(int[] trasa, int[,] macierz)
         {
             int a, b, c, d, i;
             int nowa_dlugosc = 0, najmniejsza_dlugosc = 999999;
@@ -85,8 +85,8 @@ namespace ConsoleApplication2
 
             for (i = 0; i < 1000; i++)
             {               
-                a = rnd.Next(1, 8);
-                b = rnd.Next(1, 8);
+                a = rnd.Next(1, 9);
+                b = rnd.Next(1, 9);
 
                 c = trasa[a];
                 d = trasa[b];
@@ -101,18 +101,21 @@ namespace ConsoleApplication2
                     foreach (int k in trasa) najkrotsza_trasa[k] = trasa[k];              
                 }
             }
-            System.Console.Write("\nDługość trasy zoptymalizowanej ");
-            for (i = 0; i < 9; i++) System.Console.Write(najkrotsza_trasa[i] + "->");
-            System.Console.Write(najkrotsza_trasa[9] + " " + najmniejsza_dlugosc + "km");
+            //System.Console.Write("\nDługość trasy zoptymalizowanej ");
+            //for (i = 0; i < 9; i++) System.Console.Write(najkrotsza_trasa[i] + "->");
+            //System.Console.Write(najkrotsza_trasa[9] + " " + najmniejsza_dlugosc + "km");
+            return najmniejsza_dlugosc;
         }
 
         static int algorytm_SA(int[] trasa, int[,] macierz)
         {
             int a, b, c, d;
-            int nowa_dlugosc = 0, najmniejsza_dlugosc = 999999;
+            int nowa_dlugosc = 0, najmniejsza_dlugosc = 999999, stara_dlugosc=0;
             int[] najkrotsza_trasa = new int[10];
             double p, q, delta, lambda = 0.995, T = 4000;
             Random rnd = new Random();
+
+            stara_dlugosc = oblicz_trase(trasa, macierz);
 
             while (T > 0.5)
             {
@@ -127,22 +130,28 @@ namespace ConsoleApplication2
 
                 nowa_dlugosc = oblicz_trase(trasa, macierz);
 
-                if (najmniejsza_dlugosc >= nowa_dlugosc)
+
+                if (stara_dlugosc >= nowa_dlugosc)
                 {
-                    najmniejsza_dlugosc = nowa_dlugosc;
-                    foreach (int k in trasa) najkrotsza_trasa[k] = trasa[k];
+                    if (najmniejsza_dlugosc > nowa_dlugosc)
+                    {
+                        najmniejsza_dlugosc = nowa_dlugosc;
+                        foreach (int k in trasa) najkrotsza_trasa[k] = trasa[k];
+                    }
+                    stara_dlugosc = nowa_dlugosc;
                 }
                 else
-                {
-                    delta = nowa_dlugosc - najmniejsza_dlugosc;
+                {                    
+                    delta = nowa_dlugosc - stara_dlugosc;
                     p = Math.Exp(-delta / T);
-                    if (p > q)
+                    if (p < q)
                     {
                         trasa[a] = c;
                         trasa[b] = d;
                     }
+                    else stara_dlugosc = nowa_dlugosc;
                 }
-                T *= lambda;
+                T *= lambda;                
             }
 
             //System.Console.Write("\nDługość trasy zoptymalizowanej ");
@@ -154,12 +163,15 @@ namespace ConsoleApplication2
         static int[] SA_dwietrasy(int[] trasa, int[,] macierz)
         {
             int a, b, c, d;
-            int nowa_dlugosc = 0, najmniejsza_dlugosc = 999999;
+            int nowa_dlugosc = 0, najmniejsza_dlugosc = 999999, stara_dlugosc=0;
             int[] najkrotsza_trasa = new int[11];
             int[] najmniejsze_dlugosci = new int[2];
             int[] nowe_dlugosci = new int[2];
             double p, q, delta, lambda = 0.995, T = 4000;
             Random rnd = new Random();
+
+            nowe_dlugosci = oblicz_dwie_trasy(trasa, macierz);
+            stara_dlugosc = nowe_dlugosci.Max();
 
                 while (T > 0.5)
                 {
@@ -175,21 +187,26 @@ namespace ConsoleApplication2
                     nowe_dlugosci = oblicz_dwie_trasy(trasa, macierz);
                     nowa_dlugosc = nowe_dlugosci.Max();
 
-                    if (najmniejsza_dlugosc >= nowa_dlugosc)
+                    if (stara_dlugosc >= nowa_dlugosc)
                     {
-                        najmniejsza_dlugosc = nowa_dlugosc;
-                        for(int k=0; k<11; k++) najkrotsza_trasa[k] = trasa[k];
-                        najmniejsze_dlugosci = nowe_dlugosci;                     
+                        if (najmniejsza_dlugosc >= nowa_dlugosc)
+                        {
+                            najmniejsza_dlugosc = nowa_dlugosc;
+                            for (int k = 0; k < 11; k++) najkrotsza_trasa[k] = trasa[k];
+                            najmniejsze_dlugosci = nowe_dlugosci;
+                        }
+                        stara_dlugosc = nowa_dlugosc;
                     }
                     else
                     {
-                        delta = nowa_dlugosc - najmniejsza_dlugosc;
+                        delta = nowa_dlugosc - stara_dlugosc;
                         p = Math.Exp(-delta / T);
-                        if (p > q)
+                        if (p < q)
                         {
                             trasa[a] = c;
                             trasa[b] = d;
                         }
+                        else stara_dlugosc = nowa_dlugosc;
                     }
                     T *= lambda; 
                 }
